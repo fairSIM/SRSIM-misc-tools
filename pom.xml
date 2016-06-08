@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+		http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<groupId>net.imagej</groupId>
+		<artifactId>pom-imagej</artifactId>
+		<version>15.7.0</version>
+		<relativePath />
+	</parent>
+
+	<groupId>de.bio_photonics</groupId>
+	<artifactId>SRSIM_misc_tools</artifactId>
+	<version>0.1.0-SNAPSHOT</version>
+
+	<name>plugins/SRSIM_misc_tools.jar</name>
+	<description>ImageJ tools for handling SR-SIM microscopy data (OTFs, stack sorting, ...)</description>
+
+	<developers>
+		<developer>
+			<id>mueller-physics</id>
+			<name>Marcel Mueller</name>
+			<email>mmueller@physik.uni-bielefeld.de</email>
+			<organization>Bielefeld University, Biophotonics Group</organization>
+			<organizationUrl>http://www.physik.uni-bielefeld.de/biopho</organizationUrl>
+			<roles>
+				<role>architect</role>
+				<role>developer</role>
+			</roles>
+			<timezone>Europe/Berlin</timezone>
+		</developer>
+	</developers>
+
+	<scm>
+		<connection>scm:git:git://github.com/fairSIM/SRSIM-misc-tools</connection>
+		<developerConnection>scm:git:github.com/fairSIM/SRSIM-misc-tools</developerConnection>
+		<tag>HEAD</tag>
+		<url>https://github.com/fairSIM/SRSIM-misc-tools</url>
+	</scm>
+
+	<properties>
+		<main-class>OTF_Reader</main-class>
+	</properties>
+
+	<dependencies>
+		<dependency>
+			<groupId>net.imagej</groupId>
+			<artifactId>ij</artifactId>
+		</dependency>
+	</dependencies>
+
+	<build>
+		<plugins>
+			<plugin>
+				<artifactId>maven-jar-plugin</artifactId>
+				<configuration>
+					<archive>
+						<manifest>
+							<mainClass>${main-class}</mainClass>
+						</manifest>
+					</archive>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+
+</project>
