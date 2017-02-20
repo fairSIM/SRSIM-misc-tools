@@ -24,7 +24,7 @@ import java.nio.IntBuffer;
 
 
 /** Plugin to read the OMX OTF files */
-public class OTF_Reader implements PlugIn {
+public class OTF_Reader_deconvolution implements PlugIn {
 
 
     // all options can be set by dialog via 'showDialog()'
@@ -99,7 +99,7 @@ public class OTF_Reader implements PlugIn {
     void displayOTFs( FloatProcessor [] raw ) {
 	final int w=raw[0].getWidth(), h=raw[0].getHeight();
 	
-	// output raw, 3 bands x 2 images (re and im)
+	// output raw, 1 bands x 2 images (re and im)
 	if (doDisplayRaw) {
 	    ImageStack rawSt = new ImageStack( w,h);
 	    for (int b=0;b<3;b++)
@@ -116,7 +116,7 @@ public class OTF_Reader implements PlugIn {
 	int outH = w;
 	ImageStack pwSt = new ImageStack( outW,w);
 	
-	for (int b=0;b<3;b++) {
+	for (int b=0;b<1;b++) {
 
 	    FloatProcessor outMag = new FloatProcessor(outW,outH);
 	    FloatProcessor outPha = new FloatProcessor(outW,outH);
@@ -200,11 +200,11 @@ public class OTF_Reader implements PlugIn {
 	// At byte #92:  size of extended header
 	final int extHeader = otfImg.getInt(92);
 	
-	//IJ.log("w,h,nrImg,Type, lenHeader :"+w+" "+h+" "+nrImg
-	//    +" "+fType+" "+extHeader);
+	IJ.log("w,h,nrImg,Type, lenHeader :"+w+" "+h+" "+nrImg
+	    +" "+fType+" "+extHeader);
 	
-	if ((nrImg!=3) || (fType!=4)) {
-	    throw new java.io.IOException("#Images != 3 or pxlType!=cplx\nSeems no OMX OTF file");
+	if ((nrImg!=1) || (fType!=2)) {
+	    throw new java.io.IOException("#Images != 1 or pxlType!=float\nSeems no OTF file");
 	}
 
 	// std header is 1024 bytes, offset that plus ext header size
@@ -214,14 +214,14 @@ public class OTF_Reader implements PlugIn {
 	// loop images (should be 6, 3 bands with 2 images [real,cplx] each)
 	FloatProcessor [] ret= new FloatProcessor[6];
 	
-	for (int band=0; band<3; band++) {
+	for (int band=0; band<1; band++) {
 	    ret[band*2+0] = new FloatProcessor(w,h);
 	    ret[band*2+1] = new FloatProcessor(w,h);
 
 	    for ( int y=0;y<h;y++)
 	    for ( int x=0;x<w;x++) {
 		ret[band*2+0].setf( x,y, otfImg.getFloat());
-		ret[band*2+1].setf( x,y, otfImg.getFloat());
+		//ret[band*2+1].setf( x,y, otfImg.getFloat());
 	    }
 
 	}
@@ -232,8 +232,10 @@ public class OTF_Reader implements PlugIn {
 
     /** Calculate and store the 2d projection of the OTF */
     void saveOTFprojection(FloatProcessor [] raw, File fObj) 
-	throws IOException, Conf.SomeIOException {
+	throws IOException {
 	
+	try {
+
 	
 	//FileWriter fr = new FileWriter( fObj);
 	//fr.write("# OTF sizes xy "+w+", sum z over "+h+"\n");
@@ -248,15 +250,15 @@ public class OTF_Reader implements PlugIn {
 	
 	Conf.Folder data =otf.mk("data");
 
-	data.newInt("bands" ).setVal(3);
-	data.newDbl("cycles").setVal( 0.048828 );
+	data.newInt("bands" ).setVal(1);
+	data.newDbl("cycles").setVal( 0.0725577 );
 	data.newInt("samples" ).setVal(h);
 
-	byte [][] band   = new byte[3][ 2 * 4 * h ];
-	byte [][] band3d = new byte[3][ 2 * 4 * h * w ];
-	FloatBuffer [] fb   = new FloatBuffer[3];
-	FloatBuffer [] fb3d = new FloatBuffer[3];
-	for (int i=0; i<3; i++) {
+	byte [][] band   = new byte[1][ 2 * 4 * h ];
+	byte [][] band3d = new byte[1][ 2 * 4 * h * w ];
+	FloatBuffer [] fb   = new FloatBuffer[1];
+	FloatBuffer [] fb3d = new FloatBuffer[1];
+	for (int i=0; i<1; i++) {
 	      fb[i] = ByteBuffer.wrap(  band[i]).asFloatBuffer();
 	    fb3d[i] = ByteBuffer.wrap(band3d[i]).asFloatBuffer();
 	}
@@ -264,10 +266,10 @@ public class OTF_Reader implements PlugIn {
 
 	// sum up 2D projection
 	for (int xy=0;xy<h;xy++) {
-	    float [][] sum = new float[3][2];
+	    float [][] sum = new float[1][2];
 	    
 	    // loop bands, re/im
-	    for (int b=0;b<3;b++)
+	    for (int b=0;b<1;b++)
 	    for (int c=0;c<2;c++) {
 		// sum z
 		for (int z=0;z<w;z++) {
@@ -279,7 +281,7 @@ public class OTF_Reader implements PlugIn {
 	}
 	
 	// collect 3D data
-	for (int b=0;b<3;b++)	// band
+	for (int b=0;b<1;b++)	// band
 	for (int z=0;z<w;z++)	// axial
 	for (int xy=0;xy<h;xy++)   // lateral
 	for (int c=0;c<2;c++) {	    // re/im
@@ -287,8 +289,9 @@ public class OTF_Reader implements PlugIn {
 	}
 
 	data.newData("band-0").setVal( band[0] );
-	data.newData("band-1").setVal( band[1] );
-	data.newData("band-2").setVal( band[2] );
+
+	//data.newData("band-1").setVal( band[1] );
+	//data.newData("band-2").setVal( band[2] );
 
 	if (doSave3d) {
 	    Conf.Folder otf3d = cfg.r().mk("otf3d");
@@ -300,21 +303,24 @@ public class OTF_Reader implements PlugIn {
 	    data3d.newInt("bands" ).setVal(3);
 	    data3d.newInt("samples-axial" ).setVal(w);
 	    data3d.newInt("samples-lateral" ).setVal(h);
-	    data3d.newDbl("cycles-lateral").setVal( 0.048828 );
-	    data3d.newDbl("cycles-axial").setVal( 0.12307 );
+	    data3d.newDbl("cycles-lateral").setVal( 0.0725577 );
+	    data3d.newDbl("cycles-axial").setVal( 0.1041667 );
 	
 	    data3d.newData("band-0").setVal( band3d[0] );
-	    data3d.newData("band-1").setVal( band3d[1] );
-	    data3d.newData("band-2").setVal( band3d[2] );
+	    //data3d.newData("band-1").setVal( band3d[1] );
+	    //data3d.newData("band-2").setVal( band3d[2] );
 	}
 
 
 
 	//fr.close();
 	//cfg.saveFile( fObj.getAbsolutePath());
-	fObj.createNewFile();
 	cfg.saveFile( fObj );
 	
+	} catch (Conf.SomeIOException e) {
+	    e.printStackTrace( System.out );
+	}
+
     }
 
 
@@ -323,7 +329,7 @@ public class OTF_Reader implements PlugIn {
     /** Shows a dialog to set our global options */
     int showDialog() {
 
-	GenericDialog gd = new GenericDialog("OMX OTF reader");
+	GenericDialog gd = new GenericDialog("Elite OTF reader");
 	
 	gd.addMessage("--- Options for power spectra ---");
 	gd.addCheckbox("Show logarth. spectrum", doLogPw);
@@ -354,6 +360,20 @@ public class OTF_Reader implements PlugIn {
     }
 
 
+   
+   public static void main( String [] args ) throws IOException {
+
+	OTF_Reader_deconvolution otfReader = new OTF_Reader_deconvolution();
+
+	otfReader.run("");
+
+	/*
+	FloatProcessor [] imgs = otfReader.readOTFs( new File( args[0] ));
+	otfReader.saveOTFprojection( imgs, new File( args[1]));
+	*/
+
+   }
+    
 
 
 }

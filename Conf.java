@@ -510,9 +510,11 @@ public class Conf {
     // ------ load / save ------
 
     /** Write the config to an XML file */
-    public boolean saveFile( String xmlfile ) 
+    public boolean saveFile( File xmlfile ) 
 	throws SomeIOException {
-	
+
+	System.err.println("Saving to file: "+xmlfile);
+
 	DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
 	dbf.setNamespaceAware(false);
 	dbf.setValidating(false);
@@ -536,7 +538,7 @@ public class Conf {
 	    tf.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
 	    tf.setOutputProperty(OutputKeys.STANDALONE, "yes");
 	    //tf.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4");
-	    tf.transform( new DOMSource( doc ) , new StreamResult( new File( xmlfile )));
+	    tf.transform( new DOMSource( doc ) , new StreamResult(  xmlfile ));
 	} catch (java.lang.Exception e) {
 	    throw new SomeIOException(e);
 	}
@@ -719,7 +721,7 @@ public class Conf {
 	    cfg.r().mk("otf").newData("values").setVal( test );
 
 
-	    cfg.saveFile( args[0] );
+	    cfg.saveFile( new File(args[0]) );
 	}
 
 
