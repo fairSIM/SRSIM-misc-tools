@@ -37,6 +37,8 @@ public class OTF_Reader implements PlugIn {
     int     wavelength = 515;		// emission wavelength
     boolean doSave3d = false;		// save full 3d OTF
 
+    static int verbose = 0;			// verbosity of (debug) output
+
     @Override
     public void run( String arg ) {
 
@@ -187,7 +189,8 @@ public class OTF_Reader implements PlugIn {
 	    rd.read( data );
 	    otfImg = ByteBuffer.wrap( data );
 	    short filestamp=(short)(((data[96]&0xff)<<8)|(data[97]&0xff));
-	    //IJ.log("Endian: "+filestamp+" "+(short)0xc0a0); 
+	    if (verbose>0)
+		IJ.log("Endian: "+filestamp+" "+(short)0xc0a0); 
 	    otfImg.order( java.nio.ByteOrder.LITTLE_ENDIAN );
 	}
 
@@ -199,9 +202,18 @@ public class OTF_Reader implements PlugIn {
 	final int fType = otfImg.getInt(12);
 	// At byte #92:  size of extended header
 	final int extHeader = otfImg.getInt(92);
-	
-	//IJ.log("w,h,nrImg,Type, lenHeader :"+w+" "+h+" "+nrImg
-	//    +" "+fType+" "+extHeader);
+
+	// try to read in pixel size also
+	final float micronPerPxlX = otfImg.getFloat( 40 );
+	final float micronPerPxlY = otfImg.getFloat( 44 );
+	final float micronPerPxlZ = otfImg.getFloat( 48 );
+
+	if (verbose>0) {
+	    IJ.log("w,h,nrImg,Type, lenHeader :"+w+" "+h+" "+nrImg
+		+" "+fType+" "+extHeader);
+	    IJ.log(String.format(" pxl size x: %6.4f  y: %6.4f  z: %6.4f",
+		micronPerPxlX, micronPerPxlY, micronPerPxlZ));
+	}
 	
 	if ((nrImg!=3) || (fType!=4)) {
 	    throw new java.io.IOException("#Images != 3 or pxlType!=cplx\nSeems no OMX OTF file");
@@ -352,6 +364,13 @@ public class OTF_Reader implements PlugIn {
     }
 
 
+    /** Read a .otf file for testing */
+    public static void main( String [] arg ) throws IOException {
+	OTF_Reader otfR = new OTF_Reader();
+
+	otfR.verbose = 1;
+	otfR.readOTFs( new File(arg[0]));
+    }
 
 
 }

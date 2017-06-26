@@ -6,7 +6,7 @@
 .PHONY: all clean jar
 
 all:
-	javac6 -extdirs ./external -d ./ *.java
+	javac -extdirs ./external -d ./ *.java
 
 jar:	all
 	jar -cf SRSIM_MiscTools.jar plugins.config de/* 
