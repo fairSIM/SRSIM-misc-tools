@@ -181,59 +181,20 @@ public class OTF_Reader implements PlugIn {
     static public FloatProcessor [] readOTFs(File fObj) 
 	throws java.io.IOException {
 	
-	// open file for reading
-	ByteBuffer otfImg;
-	{
-	    RandomAccessFile rd = new RandomAccessFile( fObj , "r");
-	    byte [] data = new byte[ (int)rd.length() ];
-	    rd.read( data );
-	    otfImg = ByteBuffer.wrap( data );
-	    short filestamp=(short)(((data[96]&0xff)<<8)|(data[97]&0xff));
-	    if (verbose>0)
-		IJ.log("Endian: "+filestamp+" "+(short)0xc0a0); 
-	    otfImg.order( java.nio.ByteOrder.LITTLE_ENDIAN );
-	}
-
-	
-	// First 4 Ints: w, h, #images, plx_type
-	final int w = otfImg.getInt(0); 
-	final int h = otfImg.getInt(4); 
-	final int nrImg = otfImg.getInt(8); 
-	final int fType = otfImg.getInt(12);
-	// At byte #92:  size of extended header
-	final int extHeader = otfImg.getInt(92);
-
-	// try to read in pixel size also
-	final float micronPerPxlX = otfImg.getFloat( 40 );
-	final float micronPerPxlY = otfImg.getFloat( 44 );
-	final float micronPerPxlZ = otfImg.getFloat( 48 );
-
-	if (verbose>0) {
-	    IJ.log("w,h,nrImg,Type, lenHeader :"+w+" "+h+" "+nrImg
-		+" "+fType+" "+extHeader);
-	    IJ.log(String.format(" pxl size x: %6.4f  y: %6.4f  z: %6.4f",
-		micronPerPxlX, micronPerPxlY, micronPerPxlZ));
-	}
-	
-	if ((nrImg!=3) || (fType!=4)) {
-	    throw new java.io.IOException("#Images != 3 or pxlType!=cplx\nSeems no OMX OTF file");
-	}
-
-	// std header is 1024 bytes, offset that plus ext header size
-	final int startPxl = extHeader + 1024;
-	otfImg.position( startPxl );
-
-	// loop images (should be 6, 3 bands with 2 images [real,cplx] each)
 	FloatProcessor [] ret= new FloatProcessor[6];
-	
+	OTFConverter otfConverter = new OTFConverter( fObj);
+
+	final int w = otfConverter.width;
+	final int h = otfConverter.height;
+
 	for (int band=0; band<3; band++) {
 	    ret[band*2+0] = new FloatProcessor(w,h);
 	    ret[band*2+1] = new FloatProcessor(w,h);
 
 	    for ( int y=0;y<h;y++)
 	    for ( int x=0;x<w;x++) {
-		ret[band*2+0].setf( x,y, otfImg.getFloat());
-		ret[band*2+1].setf( x,y, otfImg.getFloat());
+		ret[band*2+0].setf( x,y, otfConverter.getReal(band,y,x) );
+		ret[band*2+1].setf( x,y, otfConverter.getImag(band,y,x) );
 	    }
 
 	}
@@ -369,7 +330,9 @@ public class OTF_Reader implements PlugIn {
 	OTF_Reader otfR = new OTF_Reader();
 
 	otfR.verbose = 1;
-	otfR.readOTFs( new File(arg[0]));
+	FloatProcessor [] otfs = otfR.readOTFs( new File(arg[0]));
+	otfR.doDisplayRaw = true;
+	otfR.displayOTFs( otfs );
     }
 
 
