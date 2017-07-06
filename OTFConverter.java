@@ -131,6 +131,32 @@ public class OTFConverter {
 	}
     }
 
+    // this could / should become an interface at some point
+
+    public float [][] getBandsData() {
+	return bandsData;
+    }
+
+    public int getSamplesLateral() {
+	return height;
+    }
+
+    public int getSamplesAxial() {
+	return width;
+    }
+
+    public int getNrBands() {
+	return nrImg;
+    }
+
+    public double getCyclesPerMicronLateral() {
+	return micronPerPxlLateral;
+    }
+
+    public double getCyclesPerMicronAxial() {
+	return micronPerPxlAxial;
+    }
+
 
 
 }
