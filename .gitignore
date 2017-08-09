@@ -1,3 +1,9 @@
 *.class
 *.jar
 .*.swp
+
+.classpath
+.project
+.settings/
+
+target/
